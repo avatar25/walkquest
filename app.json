@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "WalkQuest",
+    "slug": "walkquest",
+    "scheme": "walkquest",
+    "ios": {
+      "bundleIdentifier": "dev.shiben.walkquest",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We use your location to verify walk quests.",
+        "NSCameraUsageDescription": "Optional photo proof for quests."
+      }
+    },
+    "plugins": [
+      "expo-location",
+      "expo-camera",
+      "expo-apple-authentication",
+      [
+        "react-native-maps",
+        { "googleMapsApiKey": "" }  
+      ]
+    ]
+  }
+}
