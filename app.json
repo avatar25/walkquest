@@ -17,7 +17,8 @@
       "bundleIdentifier": "dev.shiben.walkquest",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to verify walk quests.",
-        "NSCameraUsageDescription": "Optional photo proof for quests."
+        "NSCameraUsageDescription": "Optional photo proof for quests.",
+        "NSMotionUsageDescription": "Motion data helps us confirm you are actually walking during quests."
       }
     },
     "plugins": [

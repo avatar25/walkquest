@@ -1,16 +1,26 @@
 import { View, Text, TextInput, Button, Alert } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { signInWithApple } from '../lib/auth';
-import { useNavigation } from 'expo-router';
+import { sendEmailOtp, signInWithApple, verifyEmailOtp } from '../lib/auth';
+import { useNavigation, useRouter } from 'expo-router';
 import { captureError, trackEvent } from '../lib/analytics';
 import { useFeatureFlag } from '../lib/feature-flags';
+import { isOnboardingComplete } from '../lib/onboarding';
+import { getProfile } from '../lib/profile';
 
 export default function Home() {
   const nav = useNavigation<any>();
+  const router = useRouter();
   const [code, setCode] = useState('');
   const [session, setSession] = useState<any>(null);
   const emailOtpEnabled = useFeatureFlag('auth.email_otp', false);
+  const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const onboardingNavigated = useRef(false);
+
+  const trimmedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -22,9 +32,38 @@ export default function Home() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       trackEvent('auth_session_change', { hasSession: Boolean(s) });
+      onboardingNavigated.current = false;
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const completed = await isOnboardingComplete();
+        let needsOnboarding = !completed;
+        try {
+          const profile = await getProfile(session.user.id);
+          if (!profile || !profile.username || profile.onboarding_complete === false) {
+            needsOnboarding = true;
+          }
+        } catch (error) {
+          captureError(error, { stage: 'loadProfileForOnboarding' });
+        }
+        if (!cancelled && needsOnboarding && !onboardingNavigated.current) {
+          onboardingNavigated.current = true;
+          router.replace('/onboarding');
+        }
+      } catch (error) {
+        captureError(error, { stage: 'checkOnboarding' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, session?.user?.id]);
 
   async function createCrew() {
     try {
@@ -77,12 +116,74 @@ export default function Home() {
     });
   }
 
+  async function sendOtp() {
+    if (!trimmedEmail) {
+      Alert.alert('Enter email', 'Please add your email address first.');
+      return;
+    }
+    try {
+      setAuthLoading(true);
+      await sendEmailOtp(trimmedEmail);
+      setOtpRequested(true);
+      Alert.alert('Check email', 'We sent a 6-digit code to your inbox.');
+    } catch (error) {
+      Alert.alert('Error', (error as Error).message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function verifyOtpCode() {
+    if (!trimmedEmail || otpCode.length < 6) {
+      Alert.alert('Enter code', 'Enter the 6-digit code from your email.');
+      return;
+    }
+    try {
+      setAuthLoading(true);
+      await verifyEmailOtp(trimmedEmail, otpCode.trim());
+      setOtpCode('');
+      setEmail('');
+      setOtpRequested(false);
+    } catch (error) {
+      Alert.alert('Error', (error as Error).message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   return (
     <View style={{ padding: 16, gap: 12 }}>
       {!session ? (
         <>
           <Button title="Sign in with Apple" onPress={signIn} />
-          {emailOtpEnabled ? <Text style={{ color: '#666' }}>Email OTP sign-in is coming soon.</Text> : null}
+          {emailOtpEnabled ? (
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '500' }}>Or sign in with email OTP</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="name@example.com"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                style={{ borderWidth: 1, padding: 8 }}
+              />
+              {otpRequested ? (
+                <>
+                  <TextInput
+                    value={otpCode}
+                    onChangeText={setOtpCode}
+                    placeholder="6-digit code"
+                    keyboardType="number-pad"
+                    style={{ borderWidth: 1, padding: 8 }}
+                  />
+                  <Button title="Verify Code" onPress={verifyOtpCode} disabled={authLoading} />
+                  <Button title="Resend Code" onPress={sendOtp} disabled={authLoading} />
+                </>
+              ) : (
+                <Button title="Send Code" onPress={sendOtp} disabled={authLoading} />
+              )}
+            </View>
+          ) : null}
         </>
       ) : (
         <>

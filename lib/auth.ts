@@ -21,3 +21,39 @@ export async function signInWithApple() {
     throw error;
   }
 }
+
+export async function sendEmailOtp(email: string) {
+  try {
+    trackEvent('auth_email_otp_send');
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    captureError(error, { provider: 'email_otp' });
+    trackEvent('auth_email_otp_send_failure');
+    throw error;
+  }
+}
+
+export async function verifyEmailOtp(email: string, token: string) {
+  try {
+    trackEvent('auth_email_otp_verify');
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    });
+    if (error) {
+      throw error;
+    }
+    trackEvent('auth_email_otp_success');
+  } catch (error) {
+    captureError(error, { provider: 'email_otp' });
+    trackEvent('auth_email_otp_verify_failure');
+    throw error;
+  }
+}

@@ -11,13 +11,13 @@ App Foundation [complete]
 
  [x] Crash/metrics: Crashlytics/Sentry + custom events.
 
-Onboarding & Auth
+Onboarding & Auth [complete]
 
- Sign-in: Apple Sign In + optional email OTP.
+ [x] Sign-in: Apple Sign In + optional email OTP.
 
- Permissions flows: Location (When In Use + Precise), Camera, Motion. Pre-permission education screens.
+ [x] Permissions flows: Location (When In Use + Precise), Camera, Motion. Pre-permission education screens.
 
- Profile bootstrap: username, avatar (auto-generate if skipped).
+ [x] Profile bootstrap: username, avatar (auto-generate if skipped).
 
 Home / “Today’s Quest”
 
