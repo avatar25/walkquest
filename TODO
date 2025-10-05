@@ -1,0 +1,160 @@
+WalkQuest — Feature-wise TODOs (iOS)
+App Foundation [complete]
+
+ [x] Project setup: Swift 5.9+, SwiftUI, Combine, iOS 17 min target, modular structure.
+
+ [x] Networking: typed API client (async/await), request/response models, retries + exponential backoff.
+
+ [x] Secure storage: Keychain for tokens, on-device cache for quests (SQLite/GRDB).
+
+ [x] Feature flags: remote toggles for verification vendors & experiments.
+
+ [x] Crash/metrics: Crashlytics/Sentry + custom events.
+
+Onboarding & Auth
+
+ Sign-in: Apple Sign In + optional email OTP.
+
+ Permissions flows: Location (When In Use + Precise), Camera, Motion. Pre-permission education screens.
+
+ Profile bootstrap: username, avatar (auto-generate if skipped).
+
+Home / “Today’s Quest”
+
+ Quest feed: pull daily quests; show distance, difficulty, reward.
+
+ Location picker: MapKit view with user dot, quest pins, distance indicators, “Navigate” deep link to Apple Maps.
+
+ Eligibility rules: lock “Go!” until user within quest radius; show live distance.
+
+ Caching: offline list + stale-while-revalidate refresh.
+
+Capture & Proof Submission
+
+ In-app camera: AVFoundation capture, gridlines, exposure lock, no gallery import.
+
+ Auto-attach sensors: last 3s GPS samples, heading, pitch/roll (CoreMotion), EXIF.
+
+ Upload pipeline: multipart to /proofs, progressive UI states (Uploading → Verifying → Result).
+
+ UI nudge: show “face the landmark / include sign” hints per quest.
+
+ Failure UX: clear reason + one-tap retry.
+
+Server Verification (cloud, no local CV)
+
+ GPS sanity: speed/jumps, inside geofence, timestamp drift check.
+
+ VPS pose: integrate vendor (e.g., Google Geospatial / Lightship) where coverage exists; store pose quality + heading diff.
+
+ Vision layer:
+
+Landmarks → Cloud Vision Landmark API.
+
+Generic quests → multimodal LLM (Gemini or GPT-4o) with quest text + map tile + photo.
+
+ Decision engine: weighted pass with thresholds; return reason codes.
+
+ Rate limiting & abuse: per-user and per-device caps.
+
+Scoring, Streaks, Badges
+
+ Points calc: base points + distance/difficulty multipliers.
+
+ Streak logic: soft grace window (e.g., 36h) to reduce churn.
+
+ Badges: unlocks for first week, 10 quests, new area, rain day, etc.
+
+Leaderboard
+
+ Views: global, city, friends. Time windows: daily/weekly/all-time.
+
+ Pagination: server-side rank window around user.
+
+ Privacy: display name controls; opt-out toggle.
+
+Notifications
+
+ Push setup: APNs tokens, topic per city.
+
+ Nudges: “quest nearby,” “streak expiring,” “friend overtook you.”
+
+ Quiet hours: user setting + city-aware scheduling.
+
+Settings & Profile
+
+ Edit profile: name, avatar, bio.
+
+ Privacy toggles: face-blur on server, photo retention window, leaderboard visibility.
+
+ Data export/delete: request account data, delete account flow.
+
+ About: version, licenses, support.
+
+Anti-Cheat & Integrity
+
+ In-app capture enforcement: block Photos access; verify EXIF vs server time.
+
+ Device attestation: App Attest / DeviceCheck; flag jailbroken signals.
+
+ Screen-photo detection: LLM check for bezels/UI moiré; raise suspicion score.
+
+ Path check: minimal breadcrumb to ensure arrival via plausible movement.
+
+ High-value challenges: randomized pose request (“include gate on left”).
+
+Content & Quest Ops
+
+ CMS: create/curate quests with radius, hint text, reward, vendor coverage flag.
+
+ Geo health: coverage heatmap (VPS areas), fallback to generic “ambient quests” where coverage is weak.
+
+ A/B experiments: hint text variants, radius sizes, reward curves.
+
+Analytics & Experimentation
+
+ Event schema: view_quest, attempt_capture, verify_pass/fail (reason), points_awarded, streak_change.
+
+ Funnels: Home → Go! → Capture → Upload → Pass.
+
+ Cohort dashboards: D1/D7 retention, average quests/user/week, fail reasons heatmap by district.
+
+Offline & Resilience
+
+ Graceful degrade: queue proofs when offline, retry with jitter.
+
+ Timeout UX: verification SLA, user feedback, fallback retry.
+
+ Idempotency: client nonce to avoid double scoring.
+
+Moderation & Safety
+
+ Photo moderation: auto-blur faces; disallow explicit/offensive content (vendor moderation).
+
+ Location safety: avoid quests near tracks/highways/private property; time-of-day rules.
+
+ Report flow: report quest/photo/user; admin triage.
+
+Legal & Privacy
+
+ Transparent policy: what we collect (GPS, photo, sensors), why, retention defaults.
+
+ Consent: first-run consent with per-permission toggles.
+
+ Data retention: default 24–72h for raw photos unless user opts to save to profile.
+
+Payments (optional, later)
+
+ IAP: cosmetic badges/themes; no pay-to-win scores.
+
+ Promos: brand quests with disclosures; separate leaderboard.
+
+DevEx, QA, Release
+
+ API contracts: OpenAPI spec; mock server for UI dev.
+
+ Unit/UI tests: camera controller, permission flows, leaderboard windowing.
+
+ CI/CD: fastlane, TestFlight lanes, symbol upload, feature-flagged builds.
+
+ Load test: verify endpoints under burst (evening peaks).

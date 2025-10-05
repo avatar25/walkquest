@@ -3,6 +3,16 @@
     "name": "WalkQuest",
     "slug": "walkquest",
     "scheme": "walkquest",
+    "extra": {
+      "API_BASE_URL": "https://api.walkquest.dev",
+      "API_TIMEOUT_MS": 15000,
+      "FEATURE_FLAG_REFRESH_MS": 300000,
+      "SENTRY_DSN": "",
+      "DEFAULT_FEATURE_FLAGS": {
+        "auth.email_otp": { "enabled": false },
+        "quest.proof_hints": { "enabled": true }
+      }
+    },
     "ios": {
       "bundleIdentifier": "dev.shiben.walkquest",
       "infoPlist": {
@@ -14,10 +24,8 @@
       "expo-location",
       "expo-camera",
       "expo-apple-authentication",
-      [
-        "react-native-maps",
-        { "googleMapsApiKey": "" }  
-      ]
+      ["react-native-maps", { "googleMapsApiKey": "" }],
+      "sentry-expo"
     ]
   }
 }
